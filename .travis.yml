@@ -1,0 +1,48 @@
+language: go
+
+go:
+  - 1.11.x
+
+services:
+
+env:
+  - GOARCH=amd64 GOOS=linux
+  - GOARCH=amd64 GOOS=darwin
+  - GOARCH=amd64 GOOS=windows
+  - GOARCH=386 GOOS=linux
+  - GOARCH=386 GOOS=windows
+
+before_install:
+  - go mod download
+  - mkdir ./build
+
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+
+jobs:
+  include:
+    - stage: Test
+      script: go test -coverprofile=./build/cover.tmp -covermode=atomic -race ./...
+    - stage: Cross Compilation
+      script: GOARCH=amd64 GOOS=linux go build ./audiofile -o build/audiofile.amd64-linux
+    - script: GOARCH=amd64 GOOS=darwin go build ./audiofile -o build/audiofile.amd64-darwin
+    - script: GOARCH=amd64 GOOS=windows go build ./audiofile -o build/audiofile.amd64-windows.exe
+    - script: GOARCH=386 GOOS=linux go build ./audiofile -o build/audiofile.386-linux
+    - script: GOARCH=386 GOOS=windows go build ./audiofile -o build/audiofile.386-windows.exe
+    - stage: Release
+      script: echo "Deploying to Github Releases"
+      deploy:
+        provider: releases
+        api_key: "$GITHUB_OAUTH_TOKEN"
+        file_glob: true
+        file: build/audiofile*
+        skip_cleanup: true
+        on:
+          tags: true
+
+after_script:
+  - sed -i s#github.com/cloudcloud/audiofile/## ./build/cover.tmp
+  - ./cc-test-reporter after-build -t gocov --exit-code $TRAVIS_TEST_RESULT
+

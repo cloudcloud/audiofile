@@ -1,0 +1,4 @@
+.audiofile.db
+node_modules
+dist
+*log
