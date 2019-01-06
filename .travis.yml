@@ -6,11 +6,14 @@ go:
 services:
 
 env:
-  - GOARCH=amd64 GOOS=linux
-  - GOARCH=amd64 GOOS=darwin
-  - GOARCH=amd64 GOOS=windows
-  - GOARCH=386 GOOS=linux
-  - GOARCH=386 GOOS=windows
+  global:
+    - GO111MODULE=on
+  matrix:
+    - GOARCH=amd64 GOOS=linux
+    - GOARCH=amd64 GOOS=darwin
+    - GOARCH=amd64 GOOS=windows
+    - GOARCH=386 GOOS=linux
+    - GOARCH=386 GOOS=windows
 
 before_install:
   - go mod download
@@ -26,11 +29,7 @@ jobs:
     - stage: Test
       script: go test -coverprofile=./build/cover.tmp -covermode=atomic -race ./...
     - stage: Cross Compilation
-      script: GOARCH=amd64 GOOS=linux go build ./audiofile -o build/audiofile.amd64-linux
-    - script: GOARCH=amd64 GOOS=darwin go build ./audiofile -o build/audiofile.amd64-darwin
-    - script: GOARCH=amd64 GOOS=windows go build ./audiofile -o build/audiofile.amd64-windows.exe
-    - script: GOARCH=386 GOOS=linux go build ./audiofile -o build/audiofile.386-linux
-    - script: GOARCH=386 GOOS=windows go build ./audiofile -o build/audiofile.386-windows.exe
+      script: go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
     - stage: Release
       script: echo "Deploying to Github Releases"
       deploy:
