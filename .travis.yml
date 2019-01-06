@@ -18,6 +18,14 @@ env:
 before_install:
   - go mod download
   - mkdir ./build
+  - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+  - echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+  - curl -sL https://deb.nodesource.com/setup_11.x | sudo -E bash -
+  - sudo apt-get install -y nodejs yarn
+
+addons:
+  apt:
+    update: true
 
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
@@ -26,10 +34,10 @@ before_script:
 
 jobs:
   include:
-    - stage: Test
-      script: go test -coverprofile=./build/cover.tmp -covermode=atomic -race ./...
     - stage: Cross Compilation
-      script: go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
+      script: yarn build && go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
+    - stage: Test
+      script: yarn build && go test -coverprofile=./build/cover.tmp -covermode=atomic -race ./...
     - stage: Release
       script: echo "Deploying to Github Releases"
       deploy:
