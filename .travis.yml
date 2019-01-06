@@ -1,58 +1,49 @@
 language: go
-
 go:
-  - 1.11.x
-
+- 1.11.x
 dist: xenial
-
 env:
   global:
-    - GO111MODULE=on
-
+  - GO111MODULE=on
 before_install:
-  - go mod download
-  - mkdir ./build
-  - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-  - echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-  - curl -sL https://deb.nodesource.com/setup_11.x | sudo -E bash -
-  - sudo apt-get install -y nodejs yarn
-
+- go mod download
+- mkdir ./build
+- curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+- echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+- curl -sL https://deb.nodesource.com/setup_11.x | sudo -E bash -
+- sudo apt-get install -y nodejs yarn
 addons:
   apt:
     update: true
-
 before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
-
+- curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+- chmod +x ./cc-test-reporter
+- ./cc-test-reporter before-build
 stages:
-  - compile
-  - test
-  - deploy
-
+- compile
+- test
+- deploy
 jobs:
   include:
-    - stage: compile
-      script: yarn && yarn build && GOARCH=amd64 GOOS=linux go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
-    - script: yarn && yarn build && GOARCH=amd64 GOOS=darwin go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
-    - script: yarn && yarn build && GOARCH=amd64 GOOS=windows go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
-    - script: yarn && yarn build && GOARCH=386 GOOS=linux go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
-    - script: yarn && yarn build && GOARCH=386 GOOS=windows go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
-    - stage: test
-      script: yarn && yarn build && go test -coverprofile=./build/cover.tmp -covermode=atomic -race ./...
-    - stage: deploy
-      script: echo "Deploying to Github Releases"
-      deploy:
-        provider: releases
-        api_key: "$GITHUB_OAUTH_TOKEN"
-        file_glob: true
-        file: build/audiofile*
-        skip_cleanup: true
-        on:
-          tags: true
-
+  - stage: compile
+    script: yarn && yarn build && GOARCH=amd64 GOOS=linux go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
+  - script: yarn && yarn build && GOARCH=amd64 GOOS=darwin go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
+  - script: yarn && yarn build && GOARCH=amd64 GOOS=windows go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
+  - script: yarn && yarn build && GOARCH=386 GOOS=linux go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
+  - script: yarn && yarn build && GOARCH=386 GOOS=windows go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
+  - stage: test
+    script: yarn && yarn build && go test -coverprofile=./build/cover.tmp -covermode=atomic -race ./...
+  - stage: deploy
+    script: echo "Deploying to Github Releases"
+    deploy:
+      provider: releases
+      api_key:
+        secure: PupRXPEGXItwjr2OKYkT43VBLLjBClRmCbfGtvX//fzmRJBrKPNwoxdzlG1FeF+S42MN71a6kEYmM6gPJpnHIM3Gp1YBJdvEQXKH/k0ZtZ2oiXS2AE3ZJhZDT/qVh+BBtdwGKHu7AiVEdV9AOQGZEmNcD05QoYVoyudwnrmjug/984hK/InE94AAKuXUTnmNgU1CSf2fBR0H7ERiGss9cdDGJ0EEVj9e8lAmihGwGYBujUCwHllCNyRFQI4uQ9E1tJ/LfhO4kJA93GN5V8Z0EIlinkIlQDoOSmh7ZZ1zr2s6QhRfBDnEu16/hXPohSD+L9dxQ6BI/LPLR/hs/7qwumlx0sMTjmys+p95nu5UQRrb7kSF7+BnbEmGPKJo/5hkOFA/vqP9Telek577I9QoFqcNu+CsNmAH3aU/w73A3SDtvk4/0lqCV9fgIin3692M420IbH0wUxQxFaJjfSo2gZQeT9GVJYINWBaUP5j/hdJ/QBOfRugYQQKq7harUQECy+TMDObNU7BT3YKv+xqdCOAUbX+44lmfGrdS/dqw8WrHJCD6KUkV8Q/rlgy+j9SpmK/k/SS7l3Y73DKJdfllLDm+H7AvbVFzQM6h6JbMZnP4TM9wITLhAMlQTB8zBcEbY2IzyKXolcS5NzBIdzHW5VEM4ecIds/SH8yax5AEsQE=
+      file_glob: true
+      file: build/audiofile*
+      skip_cleanup: true
+      on:
+        tags: true
 after_script:
-  - sed -i s#github.com/cloudcloud/audiofile/## ./build/cover.tmp
-  - ./cc-test-reporter after-build -t gocov --exit-code $TRAVIS_TEST_RESULT
-
+- sed -i s#github.com/cloudcloud/audiofile/## ./build/cover.tmp
+- ./cc-test-reporter after-build -t gocov --exit-code $TRAVIS_TEST_RESULT
