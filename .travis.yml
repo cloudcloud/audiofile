@@ -3,7 +3,7 @@ language: go
 go:
   - 1.11.x
 
-services:
+dist: xenial
 
 env:
   global:
@@ -34,11 +34,11 @@ before_script:
 
 jobs:
   include:
-    - stage: Cross Compilation
+    - stage: compile
       script: yarn build && go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
-    - stage: Test
+    - stage: test
       script: yarn build && go test -coverprofile=./build/cover.tmp -covermode=atomic -race ./...
-    - stage: Release
+    - stage: deploy
       script: echo "Deploying to Github Releases"
       deploy:
         provider: releases
