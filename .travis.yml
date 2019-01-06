@@ -8,12 +8,6 @@ dist: xenial
 env:
   global:
     - GO111MODULE=on
-  matrix:
-    - GOARCH=amd64 GOOS=linux
-    - GOARCH=amd64 GOOS=darwin
-    - GOARCH=amd64 GOOS=windows
-    - GOARCH=386 GOOS=linux
-    - GOARCH=386 GOOS=windows
 
 before_install:
   - go mod download
@@ -40,7 +34,11 @@ stages:
 jobs:
   include:
     - stage: compile
-      script: yarn build && go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
+      script: yarn build && GOARCH=amd64 GOOS=linux go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
+    - script: yarn build && GOARCH=amd64 GOOS=darwin go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
+    - script: yarn build && GOARCH=amd64 GOOS=windows go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
+    - script: yarn build && GOARCH=386 GOOS=linux go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
+    - script: yarn build && GOARCH=386 GOOS=windows go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
     - stage: test
       script: yarn build && go test -coverprofile=./build/cover.tmp -covermode=atomic -race ./...
     - stage: deploy
