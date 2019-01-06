@@ -34,11 +34,11 @@ stages:
 jobs:
   include:
     - stage: compile
-      script: yarn && yarn build && GOARCH=amd64 GOOS=linux go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
-    - script: yarn && yarn build && GOARCH=amd64 GOOS=darwin go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
-    - script: yarn && yarn build && GOARCH=amd64 GOOS=windows go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
-    - script: yarn && yarn build && GOARCH=386 GOOS=linux go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
-    - script: yarn && yarn build && GOARCH=386 GOOS=windows go build ./audiofile -o build/audiofile.$GOARCH-$GOOS
+      script: yarn && yarn build && GOARCH=amd64 GOOS=linux go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
+    - script: yarn && yarn build && GOARCH=amd64 GOOS=darwin go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
+    - script: yarn && yarn build && GOARCH=amd64 GOOS=windows go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
+    - script: yarn && yarn build && GOARCH=386 GOOS=linux go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
+    - script: yarn && yarn build && GOARCH=386 GOOS=windows go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
     - stage: test
       script: yarn && yarn build && go test -coverprofile=./build/cover.tmp -covermode=atomic -race ./...
     - stage: deploy
