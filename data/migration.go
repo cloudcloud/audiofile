@@ -15,10 +15,8 @@ import (
 func (d *Data) migrate() error {
 	db, err := sql.Open("sqlite3", "./.audiofile.db")
 	if err != nil {
-		return err
+		log.Fatalf("Couldn't open DB: %s", err)
 	}
-	log.Printf("%#v", AssetNames())
-	log.Println(AssetString(AssetNames()[1]))
 
 	source, err := bindata.WithInstance(bindata.Resource(
 		AssetNames(),
@@ -26,9 +24,8 @@ func (d *Data) migrate() error {
 			return Asset(name)
 		},
 	))
-
 	if err != nil {
-		return err
+		log.Fatalf("Unable to work with bindata: %s", err)
 	}
 
 	data, err := sqlite3.WithInstance(db, &sqlite3.Config{})
