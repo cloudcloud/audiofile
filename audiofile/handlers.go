@@ -10,6 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// MetaFunc is short-hand method of encapsulating internal API
+// handlers that are wrapped within a response structure and timed.
+//
+// This function is used by individual handlers as a means to execute
+// their required actions before generating a response. This response
+// is then returned with the additional metadata.
 type MetaFunc func(*gin.Context, *data.Data) (interface{}, []string)
 
 func albums(c *gin.Context) {

@@ -7,7 +7,12 @@
 
 ## background
 
-Do you have a music collection that you would like to browse and organise with a nice UI? Audiofile attempts to provide such an interface, allowing for directory locations to be specified and then trawled for audio files with their ID3 information retrieved. To provide further benefit, Audiofile attempts to then help with organising your local filesystem layout, along with ensuring the quality and validaty of all metadata.
+Do you have a music collection that you would like to browse and organise with
+a nice UI? Audiofile attempts to provide such an interface, allowing for
+directory locations to be specified and then trawled for audio files with
+their ID3 information retrieved. To provide further benefit, Audiofile
+attempts to then help with organising your local filesystem layout, along
+with ensuring the quality and validaty of all metadata.
 
 ## installation
 

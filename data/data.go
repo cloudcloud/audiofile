@@ -8,6 +8,8 @@ import (
 
 	"github.com/cloudcloud/audiofile"
 	"github.com/jmoiron/sqlx"
+
+	// Using the sqlite3 driver for sqlx
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -48,7 +50,7 @@ func (d *Data) DeleteDirectory(dir audiofile.Directory) error {
 	}
 	r, err := rows.RowsAffected()
 	if r != 1 {
-		err = fmt.Errorf("Multiple deletions for a single directory!")
+		err = fmt.Errorf("multiple deletions for a single directory")
 	}
 
 	return err
@@ -93,7 +95,7 @@ func (d *Data) StoreDirectory(dir audiofile.Directory) (audiofile.Directory, err
 		return dir, err
 	}
 	if r != 1 {
-		return dir, fmt.Errorf("Replace modified multiple rows!")
+		return dir, fmt.Errorf("replace modified multiple rows")
 	}
 
 	return dir, nil

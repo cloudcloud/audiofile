@@ -15,14 +15,14 @@ func main() {
 		log.Fatalf("Unable to setup database: %s", err)
 	}
 
-	r := addApi(addMiddleware(gin.Default(), d))
+	r := addAPI(addMiddleware(gin.Default(), d))
 	r.GET("/health", health)
 	r.GET("/", root)
 
 	r.Run(":8008")
 }
 
-func addApi(r *gin.Engine) *gin.Engine {
+func addAPI(r *gin.Engine) *gin.Engine {
 	api := r.Group("/api")
 	api.GET("/albums", albums)
 	api.GET("/artist/:artist", artist)
