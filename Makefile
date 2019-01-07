@@ -1,5 +1,5 @@
 bin-prep:
-	go get -u github.com/kevinburke/go-bindata/...
+	GO111MODULE=off go get -u github.com/kevinburke/go-bindata/...
 
 bin-migrations:
 	go-bindata -o data/migrate.go -prefix data/migrations/ data/migrations/
