@@ -10,13 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type MetaFunc func(*gin.Context, *data.Data) (gin.H, []string)
+type MetaFunc func(*gin.Context, *data.Data) (interface{}, []string)
 
 func albums(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"items":  []gin.H{},
-		"errors": []string{},
-		"meta":   map[string]interface{}{},
+	withMeta(c, func(c *gin.Context, db *data.Data) (interface{}, []string) {
+		return db.GetAlbums(), []string{}
 	})
 }
 
@@ -24,38 +22,21 @@ func artist(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-func artists(c *gin.Context) {
-	// pull the data from the context
-	// retrieve artists based on the query
-
-	c.JSON(http.StatusOK, gin.H{
-		"items": []gin.H{
-			{"text": "Ministry", "href": "/artist/ministry", "albums": []gin.H{}, "status": "Active"},
-			{"text": "T.O.O.H", "href": "/artist/t.o.o.h", "albums": []gin.H{}, "status": "Active"},
-		},
-		"errors": []string{},
-		"meta":   map[string]interface{}{},
+func getArtists(c *gin.Context) {
+	withMeta(c, func(c *gin.Context, db *data.Data) (interface{}, []string) {
+		return db.GetArtists(), []string{}
 	})
 }
 
 func getDirectories(c *gin.Context) {
-	b := time.Now()
-	db := c.MustGet("db")
+	withMeta(c, func(c *gin.Context, db *data.Data) (interface{}, []string) {
+		errs := []string{}
+		d, err := db.GetDirectories()
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
 
-	d, err := db.(*data.Data).GetDirectories()
-	e := time.Now().Sub(b)
-	errs := []string{}
-	if err != nil {
-		errs = append(errs, err.Error())
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"items":  d,
-		"errors": errs,
-		"meta": map[string]interface{}{
-			"time_taken": fmt.Sprintf("%v", e),
-			"errors":     len(errs),
-		},
+		return d, errs
 	})
 }
 
@@ -64,43 +45,30 @@ func root(c *gin.Context) {
 }
 
 func storeDirectory(c *gin.Context) {
-	b := time.Now()
-	db := c.MustGet("db")
-	dir := audiofile.Directory{}
-	errs := []string{}
-	var err error
+	withMeta(c, func(c *gin.Context, db *data.Data) (interface{}, []string) {
+		errs := []string{}
+		dir := audiofile.Directory{}
 
-	if err := c.BindJSON(&dir); err != nil {
-		errs = append(errs, err.Error())
-	}
-	if dir.ID == "" {
-		dir, err = dir.GenerateID()
+		if err := c.BindJSON(&dir); err != nil {
+			errs = append(errs, err.Error())
+		}
+
+		d, err := dir.MaybeFirstTime()
 		if err != nil {
 			errs = append(errs, err.Error())
 		}
 
-		dir.DateAdded = time.Now()
-		dir.DateUpdated = time.Now()
-	}
+		res, err := db.StoreDirectory(d)
+		if err != nil {
+			errs = append(errs, err.Error())
+		}
 
-	d, err := db.(*data.Data).StoreDirectory(dir)
-	e := time.Now().Sub(b)
-	if err != nil {
-		errs = append(errs, err.Error())
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"items":  []audiofile.Directory{d},
-		"errors": errs,
-		"meta": map[string]interface{}{
-			"time_taken": fmt.Sprintf("%v", e),
-			"errors":     len(errs),
-		},
+		return []gin.H{gin.H{"directory": res}}, errs
 	})
 }
 
 func deleteDirectory(c *gin.Context) {
-	withMeta(c, func(c *gin.Context, db *data.Data) (gin.H, []string) {
+	withMeta(c, func(c *gin.Context, db *data.Data) (interface{}, []string) {
 		errs := []string{}
 		dir := audiofile.Directory{}
 
@@ -112,10 +80,10 @@ func deleteDirectory(c *gin.Context) {
 		if err != nil {
 			errs = append(errs, err.Error())
 
-			return gin.H{"status": "failure"}, errs
+			return []gin.H{gin.H{"status": "failure"}}, errs
 		}
 
-		return gin.H{"status": "success"}, errs
+		return []gin.H{gin.H{"status": "success"}}, errs
 	})
 }
 
@@ -127,7 +95,7 @@ func withMeta(c *gin.Context, f MetaFunc) *gin.Context {
 	e := time.Now().Sub(b)
 
 	c.JSON(http.StatusOK, gin.H{
-		"items":  []gin.H{d},
+		"items":  d,
 		"errors": errs,
 		"meta": map[string]interface{}{
 			"time_taken": fmt.Sprintf("%v", e),

@@ -26,3 +26,16 @@ func (d Directory) GenerateID() (Directory, error) {
 
 	return d, nil
 }
+
+// MaybeFirstTime will determine if this directory is being manipulated
+// for the first time, and if so, set additional fields.
+func (d Directory) MaybeFirstTime() (Directory, error) {
+	if len(d.ID) < 1 {
+		d.DateAdded = time.Now()
+		d.DateUpdated = d.DateAdded
+
+		return d.GenerateID()
+	}
+
+	return d, nil
+}

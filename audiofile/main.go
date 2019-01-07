@@ -25,12 +25,13 @@ func main() {
 func addApi(r *gin.Engine) *gin.Engine {
 	api := r.Group("/api")
 	api.GET("/albums", albums)
-	api.GET("/artists", artists)
-	api.GET("/settings/directories", getDirectories)
-	api.POST("/settings/directory", storeDirectory)
-	api.DELETE("/settings/directory", deleteDirectory)
-
 	api.GET("/artist/:artist", artist)
+	api.GET("/artists", getArtists)
+	api.GET("/settings/directories", getDirectories)
+
+	api.POST("/settings/directory", storeDirectory)
+
+	api.DELETE("/settings/directory", deleteDirectory)
 
 	return r
 }

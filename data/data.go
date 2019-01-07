@@ -54,9 +54,18 @@ func (d *Data) DeleteDirectory(dir audiofile.Directory) error {
 	return err
 }
 
+// GetAlbums will retrieve a slice of Album entries.
+func (d *Data) GetAlbums() []audiofile.Album {
+	a := []audiofile.Album{}
+	d.conn.Select(&a, "select * from albums")
+
+	return a
+}
+
 // GetArtists will retrieve a slice of Artist entries.
 func (d *Data) GetArtists() []audiofile.Artist {
 	a := []audiofile.Artist{}
+	d.conn.Select(&a, "select * from artists")
 
 	return a
 }
@@ -64,7 +73,7 @@ func (d *Data) GetArtists() []audiofile.Artist {
 // GetDirectories will provide a list of all known directories.
 func (d *Data) GetDirectories() ([]audiofile.Directory, error) {
 	a := []audiofile.Directory{}
-	d.conn.Select(&a, "SELECT * FROM directories")
+	d.conn.Select(&a, "select * from directories")
 
 	return a, nil
 }
