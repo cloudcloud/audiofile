@@ -2,12 +2,11 @@ package data
 
 import (
 	"database/sql"
+	"log"
 
 	migrate "github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
-
-	// All migrations are pulled in as sql files
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	bindata "github.com/golang-migrate/migrate/v4/source/go_bindata"
 
 	// Interfacing with the sqlite3 database
 	_ "github.com/mattn/go-sqlite3"
@@ -18,15 +17,34 @@ func (d *Data) migrate() error {
 	if err != nil {
 		return err
 	}
+	log.Printf("%#v", AssetNames())
+	log.Println(AssetString(AssetNames()[1]))
 
-	driver, _ := sqlite3.WithInstance(db, &sqlite3.Config{})
+	source, err := bindata.WithInstance(bindata.Resource(
+		AssetNames(),
+		func(name string) ([]byte, error) {
+			return Asset(name)
+		},
+	))
 
-	// TODO: use go-bindata for these migrations
-	m, _ := migrate.NewWithDatabaseInstance(
-		"file://data/migrations",
+	if err != nil {
+		return err
+	}
+
+	data, err := sqlite3.WithInstance(db, &sqlite3.Config{})
+	if err != nil {
+		log.Fatalf("Couldn't connect: %s", err)
+	}
+
+	m, err := migrate.NewWithInstance(
+		"go-bindata",
+		source,
 		"sqlite3",
-		driver,
+		data,
 	)
+	if err != nil {
+		log.Fatalf("Unable to migrate: %s", err)
+	}
 
 	err = m.Up()
 	if err != nil && err.Error() != "no change" {
