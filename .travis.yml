@@ -13,7 +13,7 @@ before_install:
 - curl -sL https://deb.nodesource.com/setup_11.x | sudo -E bash -
 - sudo apt-get install -y nodejs yarn
 - yarn && yarn build
-- make bin-prep bin-migrations
+- make bin-prep bin-migrations bin-dist
 addons:
   apt:
     update: true
