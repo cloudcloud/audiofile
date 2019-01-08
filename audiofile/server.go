@@ -4,15 +4,29 @@ import (
 	"net/http"
 
 	"github.com/cloudcloud/audiofile/data"
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func addMiddleware(r *gin.Engine, d *data.Data) *gin.Engine {
-	// TODO: assets, can go when embedded into binary
-	r.LoadHTMLGlob("./dist/*html")
-	r.Static("/js", "./dist/js")
-	r.Static("/css", "./dist/css")
+	r.StaticFS("/js",
+		&assetfs.AssetFS{
+			Asset:     Asset,
+			AssetDir:  AssetDir,
+			AssetInfo: AssetInfo,
+			Prefix:    "js/",
+		},
+	)
+
+	r.StaticFS("/css",
+		&assetfs.AssetFS{
+			Asset:     Asset,
+			AssetDir:  AssetDir,
+			AssetInfo: AssetInfo,
+			Prefix:    "css/",
+		},
+	)
 
 	r.Use(
 		cors.New(cors.Config{

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"time"
@@ -47,7 +48,14 @@ func getDirectories(c *gin.Context) {
 }
 
 func root(c *gin.Context) {
-	c.HTML(http.StatusOK, "index.html", gin.H{})
+	r := bytes.NewReader(MustAsset("index.html"))
+	c.DataFromReader(
+		http.StatusOK,
+		int64(len(MustAssetString("index.html"))),
+		"text/html",
+		r,
+		map[string]string{},
+	)
 }
 
 func storeDirectory(c *gin.Context) {
