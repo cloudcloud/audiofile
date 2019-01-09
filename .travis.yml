@@ -2,6 +2,11 @@ language: go
 go:
 - 1.11.x
 dist: xenial
+cache:
+  npm: true
+  yarn: true
+  directories:
+  - node_modules
 env:
   global:
   - GO111MODULE=on
@@ -23,16 +28,10 @@ before_script:
 - ./cc-test-reporter before-build
 jobs:
   include:
-  - stage: compile
-    script: GOARCH=amd64 GOOS=linux go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
-  - script: GOARCH=amd64 GOOS=darwin go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
-  - script: GOARCH=amd64 GOOS=windows go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
-  - script: GOARCH=386 GOOS=linux go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
-  - script: GOARCH=386 GOOS=windows go build -o build/audiofile.$GOARCH-$GOOS ./audiofile
   - stage: test
     script: go test -coverprofile=./build/cover.tmp -covermode=atomic -race ./...
   - stage: deploy
-    script: echo "Deploying to Github Releases"
+    script: make binaries
     deploy:
       provider: releases
       api_key:
