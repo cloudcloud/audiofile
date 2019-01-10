@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-container fluid grid-list-sm>
-      <v-layout row wrap mt-5>
+      <v-layout row wrap>
         <v-flex xs12 md-5>
           <h2 class="display-1 font-weight-bold mb-3">settings</h2>
         </v-flex>

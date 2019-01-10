@@ -26,6 +26,10 @@ const apiClient = {
     return this.perform('delete', '/api/settings/directory', directory);
   },
 
+  triggerTrawl() {
+    return this.perform('put', '/api/trawl');
+  },
+
   async perform(method, resource, data) {
     return client({
       method,

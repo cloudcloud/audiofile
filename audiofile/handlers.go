@@ -81,6 +81,12 @@ func storeDirectory(c *gin.Context) {
 	})
 }
 
+func triggerTrawl(c *gin.Context) {
+	withMeta(c, func(c *gin.Context, db *data.Data) (interface{}, []string) {
+		return []gin.H{gin.H{"trawl": "triggered"}}, []string{}
+	})
+}
+
 func deleteDirectory(c *gin.Context) {
 	withMeta(c, func(c *gin.Context, db *data.Data) (interface{}, []string) {
 		errs := []string{}

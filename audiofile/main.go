@@ -31,6 +31,8 @@ func addAPI(r *gin.Engine) *gin.Engine {
 
 	api.POST("/settings/directory", storeDirectory)
 
+	api.PUT("/trawl", triggerTrawl)
+
 	api.DELETE("/settings/directory", deleteDirectory)
 
 	return r

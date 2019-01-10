@@ -7,12 +7,16 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    alerts: {},
     artists: {},
     settings: {
       directories: {},
     },
   },
   mutations: {
+    resetAlerts (state, alerts) {
+      state.alerts = alerts;
+    },
     resetArtists (state, artists) {
       state.artists = artists;
     },
@@ -21,6 +25,9 @@ export default new Vuex.Store({
     },
   },
   getters: {
+    allAlerts: state => {
+      return state.alerts;
+    },
     allArtists: state => {
       return state.artists;
     },
@@ -60,6 +67,17 @@ export default new Vuex.Store({
 
       return apiClient.removeDirectory(directory).then(() => {
         commit('resetDirectories', directories);
+      });
+    },
+    triggerTrawl({commit}) {
+      return new Promise((resolve) => {
+        apiClient.triggerTrawl().then((data) => {
+          commit('resetAlerts', {
+            trawlFailure: (data.meta.errors > 0 && data.items.length < 1),
+            trawlSuccess: (data.meta.errors == 0 && data.items.length > 0)
+          });
+          resolve();
+        });
       });
     },
     updateArtist({commit, state}, artist) {
