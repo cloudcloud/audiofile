@@ -19,6 +19,14 @@ binary: GOARCH?=amd64
 binary: GOOS?=linux
 binary:
 	go build -o build/audiofile.${GOARCH}-${GOOS} ./audiofile
+	if [ "${GOOS}" = "windows" ]; then \
+		mv build/audiofile.${GOARCH}-${GOOS} build/audiofile.${GOARCH}-${GOOS}.exe; \
+	fi
+
+clean:
+	rm audiofile/assets.go
+	rm data/migrate.go
+	rm -r dist
 
 # at this time, there's no watch enabled for the go binary
 dev-be: bin-prep bin-migrations bin-dist install
