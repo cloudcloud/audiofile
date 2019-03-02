@@ -87,12 +87,12 @@ jobs:
           command: |
             ./go-bindata -o audiofile/assets.go -prefix dist/ dist/...
             ./cc-test-reporter before-build
-            go test -coverprofile=cover.tmp -covermode=atomic -race ./...
+            go test -coverprofile=c.out -covermode=atomic -race ./...
             RESULT=$?
-            sed -i s#github.com/cloudcloud/audiofile## cover.tmp
-            ./cc-test-reporter after-build -t gocov -i cover.tmp --exit-code $RESULT
+            sed -i s#github.com/cloudcloud/audiofile## c.out
+            ./cc-test-reporter after-build -t gocov --exit-code $RESULT
       - store_artifacts:
-          path: cover.tmp
+          path: c.out
           destination: test-coverage
       - persist_to_workspace:
           root: ./
