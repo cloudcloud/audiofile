@@ -11,6 +11,7 @@ aliases:
   - &save-cache
     paths:
       - ./
+      - /go/bin/
     key: v1-base-deps-{{ checksum "go.sum" }}
 
   # Provide a way to retrieve the current cache into the directory.
@@ -21,6 +22,7 @@ aliases:
   - &save-fe
     paths:
       - ./
+      - /go/bin/
     key: v1-fe-deps-{{ checksum "yarn.lock" }}
 
   # Restore state from captured FE steps.
