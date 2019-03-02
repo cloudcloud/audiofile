@@ -1,0 +1,125 @@
+#
+# Capture common shared aliases throughout the script.
+#
+aliases:
+
+  # Provide shared environment variables.
+  - &default-env
+    GO111MODULE=on
+
+  # Provide a way to save the current directory to cache.
+  - &save-cache
+    paths:
+      - ./
+    key: v1-base-deps-{{ checksum "go.sum" }}
+
+  # Provide a way to retrieve the current cache into the directory.
+  - &restore-cache
+    key: v1-base-deps-{{ checksum "go.sum" }}
+
+  # Capture data state once FE has completed.
+  - &save-fe
+    paths:
+      - ./
+    key: v1-fe-deps-{{ checksum "package.lock" }}
+
+  # Restore state from captured FE steps.
+  - &restore-fe
+    key: v1-fe-deps-{{ checksum "package.lock" }}
+
+version: 2
+jobs:
+  build:
+    environment: *default-env
+    docker:
+      - image: golang:1.12-stretch
+    steps:
+      - restore-cache: *restore-cache
+      - checkout
+      - run:
+          name: Prep local
+          command: |
+            go mod download
+            GO111MODULE=off go get -u github.com/kevinburke/go-bindata/...
+            GO111MODULE=off go get -u github.com/tcnksm/ghr
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > cc-test-reporter
+            chmod +x cc-test-reporter
+      - run:
+          name: Compile binary data
+          command: |
+            go-bindata -o data/migrate.go -prefix data/migrations/ data/migrations/
+            sed -i "s/package main/package data/" data/migrate.go
+      - save-cache: *save-cache
+
+  fe-compile:
+    environment: *default-env
+    docker:
+      - image: vuejs/ci
+    steps:
+      - restore-cache: *restore-cache
+      - run:
+          name: Compile the Frontend
+          command: |
+            yarn && yarn build
+      - save-cache: *save-fe
+
+  be-tests:
+    environment: *default-env
+    docker:
+      - image: golang:1.12-stretch
+    steps:
+      - restore-cache: *restore-fe
+      - run:
+          name: Test backend
+          command: |
+            go-bindata -o audiofile/assets.go -prefix dist/ dist/...
+            cc-test-reporter before-build
+            go test -coverprofile=build/cover.tmp -covermode=atomic -race ./...
+            RESULT=$?
+            sed -i s#github.com/cloudcloud/audiofile## build/cover.tmp
+            cc-test-reporter after-build -t gocov --exit-code $RESULT
+
+  images:
+    environment: *default-env
+    docker:
+      - image: golang:1.12-stretch
+    steps:
+      - restore-cache: *restore-fe
+      - run:
+          name: Build executables
+          command: |
+            go-bindata -o audiofile/assets.go -prefix dist/ dist/...
+            GOARCH=amd64 GOOS=linux go build -o build/audiofile.${GOARCH}-${GOOS} ./audiofile
+            GOARCH=amd64 GOOS=darwin go build -o build/audiofile.${GOARCH}-${GOOS} ./audiofile
+            GOARCH=amd64 GOOS=windows go build -o build/audiofile.${GOARCH}-${GOOS}.exe ./audiofile
+            GOARCH=386 GOOS=linux go build -o build/audiofile.${GOARCH}-${GOOS} ./audiofile
+            GOARCH=386 GOOS=windows go build -o build/audiofile.${GOARCH}-${GOOS}.exe ./audiofile
+      - run:
+          name: Push to github
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${CIRCLE_TAG} ./build/
+
+workflows:
+  version: 2
+
+  tests:
+    jobs:
+      - build
+
+      - fe-compile:
+          requires:
+            - build
+
+      - be-tests:
+          requires:
+            - fe-compile
+
+      - images:
+          requires:
+            - be-tests
+          branches:
+            ignore: /.*/
+          tags:
+            only:
+              - /v[0-9].[0-9].[0-9]/
+

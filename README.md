@@ -2,7 +2,6 @@
 
 [![GoDoc](https://godoc.org/github.com/cloudcloud/audiofile?status.svg)](https://godoc.org/github.com/cloudcloud/audiofile)
 [![Go Report Card](https://goreportcard.com/badge/github.com/cloudcloud/audiofile)](https://goreportcard.com/report/github.com/cloudcloud/audiofile)
-[![Build Status](https://travis-ci.org/cloudcloud/audiofile.svg?branch=master)](https://travis-ci.org/cloudcloud/audiofile)
 [![Maintainability](https://api.codeclimate.com/v1/badges/0b085055a32c5b7783b0/maintainability)](https://codeclimate.com/github/cloudcloud/audiofile/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/0b085055a32c5b7783b0/test_coverage)](https://codeclimate.com/github/cloudcloud/audiofile/test_coverage)
 
