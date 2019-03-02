@@ -21,11 +21,11 @@ aliases:
   - &save-fe
     paths:
       - ./
-    key: v1-fe-deps-{{ checksum "package.lock" }}
+    key: v1-fe-deps-{{ checksum "yarn.lock" }}
 
   # Restore state from captured FE steps.
   - &restore-fe
-    key: v1-fe-deps-{{ checksum "package.lock" }}
+    key: v1-fe-deps-{{ checksum "yarn.lock" }}
 
 version: 2
 jobs:
