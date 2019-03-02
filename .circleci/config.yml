@@ -64,6 +64,9 @@ jobs:
           command: |
             yarn && yarn build
       - save-cache: *save-fe
+      - store_artifacts:
+          path: dist
+          destination: frontend
 
   be-tests:
     environment: *default-env
@@ -77,10 +80,13 @@ jobs:
           command: |
             go-bindata -o audiofile/assets.go -prefix dist/ dist/...
             cc-test-reporter before-build
-            go test -coverprofile=build/cover.tmp -covermode=atomic -race ./...
+            go test -coverprofile=cover.tmp -covermode=atomic -race ./...
             RESULT=$?
-            sed -i s#github.com/cloudcloud/audiofile## build/cover.tmp
-            cc-test-reporter after-build -t gocov --exit-code $RESULT
+            sed -i s#github.com/cloudcloud/audiofile## cover.tmp
+            cc-test-reporter after-build -t gocov -i cover.tmp --exit-code $RESULT
+      - store_artifacts:
+          path: cover.tmp
+          destination: test-coverage
 
   images:
     environment: *default-env
@@ -102,6 +108,9 @@ jobs:
           name: Push to github
           command: |
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${CIRCLE_TAG} ./build/
+      - store_artifacts:
+          path: build
+          destination: binaries
 
 workflows:
   version: 2
