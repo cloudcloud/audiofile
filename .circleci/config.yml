@@ -7,6 +7,10 @@ aliases:
   - &default-env
     GO111MODULE=on
 
+  # Set a specific working directory.
+  - &working-dir
+    /var/audiofile
+
   # Provide a way to save the current directory to cache.
   - &save-cache
     paths:
@@ -33,6 +37,7 @@ version: 2
 jobs:
   build:
     environment: *default-env
+    working_directory: *working-dir
     docker:
       - image: golang:1.12-stretch
     steps:
@@ -57,6 +62,7 @@ jobs:
 
   fe-compile:
     environment: *default-env
+    working_directory: *working-dir
     docker:
       - image: vuejs/ci
     steps:
@@ -77,6 +83,7 @@ jobs:
 
   be-tests:
     environment: *default-env
+    working_directory: *working-dir
     docker:
       - image: golang:1.12-stretch
     steps:
@@ -101,6 +108,7 @@ jobs:
 
   images:
     environment: *default-env
+    working_directory: *working-dir
     docker:
       - image: golang:1.12-stretch
     steps:
