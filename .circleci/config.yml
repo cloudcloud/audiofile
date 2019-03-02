@@ -12,22 +12,22 @@ aliases:
     paths:
       - ./
       - /go/bin/
-    key: v1-base-deps-{{ checksum "go.sum" }}
+    key: v2-base-deps-{{ $CIRCLE_SHA1 }}
 
   # Provide a way to retrieve the current cache into the directory.
   - &restore-cache
-    key: v1-base-deps-{{ checksum "go.sum" }}
+    key: v2-base-deps-{{ $CIRCLE_SHA1 }}
 
   # Capture data state once FE has completed.
   - &save-fe
     paths:
       - ./
       - /go/bin/
-    key: v1-fe-deps-{{ checksum "yarn.lock" }}
+    key: v2-fe-deps-{{ $CIRCLE_SHA1 }}
 
   # Restore state from captured FE steps.
   - &restore-fe
-    key: v1-fe-deps-{{ checksum "yarn.lock" }}
+    key: v2-fe-deps-{{ $CIRCLE_SHA1 }}
 
 version: 2
 jobs:
@@ -37,30 +37,31 @@ jobs:
       - image: golang:1.12-stretch
     steps:
       - checkout
-      - restore-cache: *restore-cache
-      - checkout
       - run:
           name: Prep local
           command: |
             go mod download
-            GO111MODULE=off go get -u github.com/kevinburke/go-bindata/...
-            GO111MODULE=off go get -u github.com/tcnksm/ghr
+            GO111MODULE=off go get -u github.com/kevinburke/go-bindata/... && mv /go/bin/go-bindata ./
+            GO111MODULE=off go get -u github.com/tcnksm/ghr && mv /go/bin/ghr ./
             curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > cc-test-reporter
             chmod +x cc-test-reporter
       - run:
           name: Compile binary data
           command: |
-            go-bindata -o data/migrate.go -prefix data/migrations/ data/migrations/
+            ./go-bindata -o data/migrate.go -prefix data/migrations/ data/migrations/
             sed -i "s/package main/package data/" data/migrate.go
-      - save-cache: *save-cache
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - ./
 
   fe-compile:
     environment: *default-env
     docker:
       - image: vuejs/ci
     steps:
-      - checkout
-      - restore-cache: *restore-cache
+      - attach_workspace:
+          at: ./
       - run:
           name: Compile the Frontend
           command: |
@@ -69,38 +70,46 @@ jobs:
       - store_artifacts:
           path: dist
           destination: frontend
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - ./
 
   be-tests:
     environment: *default-env
     docker:
       - image: golang:1.12-stretch
     steps:
-      - checkout
-      - restore-cache: *restore-fe
+      - attach_workspace:
+          at: ./
       - run:
           name: Test backend
           command: |
-            go-bindata -o audiofile/assets.go -prefix dist/ dist/...
-            cc-test-reporter before-build
+            ./go-bindata -o audiofile/assets.go -prefix dist/ dist/...
+            ./cc-test-reporter before-build
             go test -coverprofile=cover.tmp -covermode=atomic -race ./...
             RESULT=$?
             sed -i s#github.com/cloudcloud/audiofile## cover.tmp
-            cc-test-reporter after-build -t gocov -i cover.tmp --exit-code $RESULT
+            ./cc-test-reporter after-build -t gocov -i cover.tmp --exit-code $RESULT
       - store_artifacts:
           path: cover.tmp
           destination: test-coverage
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - ./
 
   images:
     environment: *default-env
     docker:
       - image: golang:1.12-stretch
     steps:
-      - checkout
-      - restore-cache: *restore-fe
+      - attach_workspace:
+          at: ./
       - run:
           name: Build executables
           command: |
-            go-bindata -o audiofile/assets.go -prefix dist/ dist/...
+            ./go-bindata -o audiofile/assets.go -prefix dist/ dist/...
             GOARCH=amd64 GOOS=linux go build -o build/audiofile.${GOARCH}-${GOOS} ./audiofile
             GOARCH=amd64 GOOS=darwin go build -o build/audiofile.${GOARCH}-${GOOS} ./audiofile
             GOARCH=amd64 GOOS=windows go build -o build/audiofile.${GOARCH}-${GOOS}.exe ./audiofile
@@ -109,7 +118,7 @@ jobs:
       - run:
           name: Push to github
           command: |
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${CIRCLE_TAG} ./build/
+            ./ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${CIRCLE_TAG} ./build/
       - store_artifacts:
           path: build
           destination: binaries
