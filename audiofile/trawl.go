@@ -26,8 +26,6 @@ type Walk struct {
 // looking for appropriate files to ingest.
 func Trawl(dir audiofile.Directory, w *Walk) *Walk {
 	w.fc = make(chan audiofile.File, 30)
-	w.mc = make(chan bool, 1)
-
 	go w.Push(dir.Directory)
 
 	err := filepath.Walk(dir.Directory, w.Read)

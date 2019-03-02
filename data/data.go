@@ -68,27 +68,13 @@ func (d *Data) GetAlbums() []audiofile.Album {
 // GetAlbumID will return an existing ID for an Album or
 // generate a new ID instead.
 func (d *Data) GetAlbumID(a string) string {
-	i := ""
-	d.conn.Select(&i, "select id from album where name=?", a)
-	if i == "" || len(i) < 10 {
-		u, _ := uuid.NewV4()
-		i = u.String()
-	}
-
-	return i
+	return d.getIDOrGenerate("album", a)
 }
 
 // GetArtistID will return an existing ID for an Artist or
 // generate a new ID instead.
 func (d *Data) GetArtistID(a string) string {
-	i := ""
-	d.conn.Select(&i, "select id from artist where name=?", a)
-	if i == "" || len(i) < 10 {
-		u, _ := uuid.NewV4()
-		i = u.String()
-	}
-
-	return i
+	return d.getIDOrGenerate("artist", a)
 }
 
 // GetArtists will retrieve a slice of Artist entries.
@@ -126,4 +112,19 @@ func (d *Data) StoreDirectory(dir audiofile.Directory) (audiofile.Directory, err
 	}
 
 	return dir, nil
+}
+
+func (d *Data) getIDOrGenerate(t, s string) string {
+	i := ""
+	d.conn.Select(
+		&i,
+		fmt.Sprintf("select id from %s where name=?", s),
+	)
+
+	if i == "" || len(i) < 10 {
+		u, _ := uuid.NewV4()
+		i = u.String()
+	}
+
+	return i
 }
