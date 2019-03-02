@@ -5,3 +5,4 @@ dist
 *log
 data/migrate.go
 audiofile/assets.go
+c.out

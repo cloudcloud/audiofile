@@ -83,6 +83,13 @@ func storeDirectory(c *gin.Context) {
 
 func triggerTrawl(c *gin.Context) {
 	withMeta(c, func(c *gin.Context, db *data.Data) (interface{}, []string) {
+		w := &Walk{db: db, Errors: []string{}, Files: []audiofile.File{}, mc: make(chan bool)}
+
+		dirs, _ := db.GetDirectories()
+		for _, x := range dirs {
+			go Trawl(x, w)
+		}
+
 		return []gin.H{gin.H{"trawl": "triggered"}}, []string{}
 	})
 }

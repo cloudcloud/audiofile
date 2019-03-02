@@ -1,6 +1,7 @@
 module github.com/cloudcloud/audiofile
 
 require (
+	github.com/cloudcloud/go-id3 v0.0.0-20181021013013-a183a7f1fcbb
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/gin-contrib/cors v0.0.0-20181206035131-7c641a7a7dc5
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect

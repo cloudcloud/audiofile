@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/cloudcloud/audiofile"
+	"github.com/golang-plus/uuid"
 	"github.com/jmoiron/sqlx"
 
 	// Using the sqlite3 driver for sqlx
@@ -62,6 +63,32 @@ func (d *Data) GetAlbums() []audiofile.Album {
 	d.conn.Select(&a, "select * from albums")
 
 	return a
+}
+
+// GetAlbumID will return an existing ID for an Album or
+// generate a new ID instead.
+func (d *Data) GetAlbumID(a string) string {
+	i := ""
+	d.conn.Select(&i, "select id from album where name=?", a)
+	if i == "" || len(i) < 10 {
+		u, _ := uuid.NewV4()
+		i = u.String()
+	}
+
+	return i
+}
+
+// GetArtistID will return an existing ID for an Artist or
+// generate a new ID instead.
+func (d *Data) GetArtistID(a string) string {
+	i := ""
+	d.conn.Select(&i, "select id from artist where name=?", a)
+	if i == "" || len(i) < 10 {
+		u, _ := uuid.NewV4()
+		i = u.String()
+	}
+
+	return i
 }
 
 // GetArtists will retrieve a slice of Artist entries.
