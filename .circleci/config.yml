@@ -34,6 +34,7 @@ jobs:
     docker:
       - image: golang:1.12-stretch
     steps:
+      - checkout
       - restore-cache: *restore-cache
       - checkout
       - run:
@@ -56,6 +57,7 @@ jobs:
     docker:
       - image: vuejs/ci
     steps:
+      - checkout
       - restore-cache: *restore-cache
       - run:
           name: Compile the Frontend
@@ -68,6 +70,7 @@ jobs:
     docker:
       - image: golang:1.12-stretch
     steps:
+      - checkout
       - restore-cache: *restore-fe
       - run:
           name: Test backend
@@ -84,6 +87,7 @@ jobs:
     docker:
       - image: golang:1.12-stretch
     steps:
+      - checkout
       - restore-cache: *restore-fe
       - run:
           name: Build executables
@@ -102,7 +106,7 @@ jobs:
 workflows:
   version: 2
 
-  tests:
+  audiofile:
     jobs:
       - build
 
