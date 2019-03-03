@@ -9,29 +9,16 @@ aliases:
 
   # Set a specific working directory.
   - &working-dir
-    /var/audiofile
+    /go/audiofile
 
-  # Provide a way to save the current directory to cache.
-  - &save-cache
+  # Workspace persistence carries thorugh.
+  - &workspace-persist
+    root: /go/
     paths:
-      - ./
-      - /go/bin/
-    key: v2-base-deps-{{ $CIRCLE_SHA1 }}
-
-  # Provide a way to retrieve the current cache into the directory.
-  - &restore-cache
-    key: v2-base-deps-{{ $CIRCLE_SHA1 }}
-
-  # Capture data state once FE has completed.
-  - &save-fe
-    paths:
-      - ./
-      - /go/bin/
-    key: v2-fe-deps-{{ $CIRCLE_SHA1 }}
-
-  # Restore state from captured FE steps.
-  - &restore-fe
-    key: v2-fe-deps-{{ $CIRCLE_SHA1 }}
+      - audiofile
+      - bin
+      - pkg
+      - src
 
 version: 2
 jobs:
@@ -42,23 +29,27 @@ jobs:
       - image: golang:1.12-stretch
     steps:
       - checkout
+      - restore-cache:
+          key: v1-deps-{{ checksum "go.sum" }}
+      - checkout
       - run:
           name: Prep local
           command: |
             go mod download
-            GO111MODULE=off go get -u github.com/kevinburke/go-bindata/... && mv /go/bin/go-bindata ./
-            GO111MODULE=off go get -u github.com/tcnksm/ghr && mv /go/bin/ghr ./
-            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > cc-test-reporter
-            chmod +x cc-test-reporter
+            GO111MODULE=off go get -u github.com/kevinburke/go-bindata/...
+            GO111MODULE=off go get -u github.com/tcnksm/ghr
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /go/bin/cc-test-reporter
+            chmod +x /go/bin/cc-test-reporter
       - run:
           name: Compile binary data
           command: |
-            ./go-bindata -o data/migrate.go -prefix data/migrations/ data/migrations/
+            go-bindata -o data/migrate.go -prefix data/migrations/ data/migrations/
             sed -i "s/package main/package data/" data/migrate.go
-      - persist_to_workspace:
-          root: ./
+      - persist_to_workspace: *workspace-persist
+      - save-cache:
           paths:
-            - ./
+            - /go/
+          key: v1-deps-{{ checksum "go.sum" }}
 
   fe-compile:
     environment: *default-env
@@ -67,19 +58,15 @@ jobs:
       - image: vuejs/ci
     steps:
       - attach_workspace:
-          at: ./
+          at: /go/
       - run:
           name: Compile the Frontend
           command: |
             yarn && yarn build
-      - save-cache: *save-fe
       - store_artifacts:
           path: dist
           destination: frontend
-      - persist_to_workspace:
-          root: ./
-          paths:
-            - ./
+      - persist_to_workspace: *workspace-persist
 
   be-tests:
     environment: *default-env
@@ -88,23 +75,22 @@ jobs:
       - image: golang:1.12-stretch
     steps:
       - attach_workspace:
-          at: ./
+          at: /go/
       - run:
           name: Test backend
           command: |
-            ./go-bindata -o audiofile/assets.go -prefix dist/ dist/...
-            ./cc-test-reporter before-build
+            cc-test-reporter before-build
+            go-bindata -o ./audiofile/assets.go -prefix dist/ dist/...
             go test -coverprofile=c.out -covermode=atomic -race ./...
             RESULT=$?
-            sed -i s#github.com/cloudcloud/audiofile## c.out
-            ./cc-test-reporter after-build -t gocov --exit-code $RESULT
+            sed -i s#github.com/cloudcloud/audiofile/## c.out
+            sed -i '/^audiofile\/assets.go.*/d' c.out
+            sed -i '/^data\/migrate.go.*/d' c.out
+            cc-test-reporter after-build -t gocov --exit-code $RESULT
       - store_artifacts:
           path: c.out
           destination: test-coverage
-      - persist_to_workspace:
-          root: ./
-          paths:
-            - ./
+      - persist_to_workspace: *workspace-persist
 
   images:
     environment: *default-env
@@ -113,11 +99,11 @@ jobs:
       - image: golang:1.12-stretch
     steps:
       - attach_workspace:
-          at: ./
+          at: /go/
       - run:
           name: Build executables
           command: |
-            ./go-bindata -o audiofile/assets.go -prefix dist/ dist/...
+            go-bindata -o audiofile/assets.go -prefix dist/ dist/...
             GOARCH=amd64 GOOS=linux go build -o build/audiofile.${GOARCH}-${GOOS} ./audiofile
             GOARCH=amd64 GOOS=darwin go build -o build/audiofile.${GOARCH}-${GOOS} ./audiofile
             GOARCH=amd64 GOOS=windows go build -o build/audiofile.${GOARCH}-${GOOS}.exe ./audiofile
@@ -126,7 +112,7 @@ jobs:
       - run:
           name: Push to github
           command: |
-            ./ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${CIRCLE_TAG} ./build/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${CIRCLE_TAG} ./build/
       - store_artifacts:
           path: build
           destination: binaries

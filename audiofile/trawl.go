@@ -50,9 +50,9 @@ func (w *Walk) Push(d string) {
 		if !more {
 			w.mc <- true
 			return
-		} else {
-			w.Files = append(w.Files, f)
 		}
+
+		w.Files = append(w.Files, f)
 	}
 }
 
