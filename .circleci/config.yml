@@ -20,23 +20,30 @@ jobs:
       - image: golang:1.12-stretch
     steps:
       - checkout
+      - restore-cache:
+          key: v1-deps-{{ checksum "go.sum" }}
       - run:
           name: Prep local
           command: |
             go mod download
-            GO111MODULE=off go get -u github.com/kevinburke/go-bindata/... && mv /go/bin/go-bindata ./
-            GO111MODULE=off go get -u github.com/tcnksm/ghr && mv /go/bin/ghr ./
-            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > cc-test-reporter
-            chmod +x cc-test-reporter
+            GO111MODULE=off go get -u github.com/kevinburke/go-bindata/...
+            GO111MODULE=off go get -u github.com/tcnksm/ghr
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > /go/bin/cc-test-reporter
+            chmod +x /go/bin/cc-test-reporter
       - run:
           name: Compile binary data
           command: |
-            ./go-bindata -o data/migrate.go -prefix data/migrations/ data/migrations/
+            go-bindata -o data/migrate.go -prefix data/migrations/ data/migrations/
             sed -i "s/package main/package data/" data/migrate.go
       - persist_to_workspace:
           root: ./
           paths:
             - ./
+      - save-cache:
+          paths:
+            - ./
+            - /go/
+          key: v1-deps-{{ checksum "go.sum" }}
 
   fe-compile:
     environment: *default-env
@@ -69,12 +76,12 @@ jobs:
       - run:
           name: Test backend
           command: |
-            ./cc-test-reporter before-build
-            ./go-bindata -o ./audiofile/assets.go -prefix dist/ dist/...
+            cc-test-reporter before-build
+            go-bindata -o ./audiofile/assets.go -prefix dist/ dist/...
             go test -coverprofile=c.out -covermode=atomic -race ./...
             RESULT=$?
             sed -i s#github.com/cloudcloud/audiofile## c.out
-            ./cc-test-reporter after-build -t gocov --exit-code $RESULT
+            cc-test-reporter after-build -t gocov --exit-code $RESULT
       - store_artifacts:
           path: c.out
           destination: test-coverage
@@ -94,7 +101,7 @@ jobs:
       - run:
           name: Build executables
           command: |
-            ./go-bindata -o audiofile/assets.go -prefix dist/ dist/...
+            go-bindata -o audiofile/assets.go -prefix dist/ dist/...
             GOARCH=amd64 GOOS=linux go build -o build/audiofile.${GOARCH}-${GOOS} ./audiofile
             GOARCH=amd64 GOOS=darwin go build -o build/audiofile.${GOARCH}-${GOOS} ./audiofile
             GOARCH=amd64 GOOS=windows go build -o build/audiofile.${GOARCH}-${GOOS}.exe ./audiofile
@@ -103,7 +110,7 @@ jobs:
       - run:
           name: Push to github
           command: |
-            ./ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${CIRCLE_TAG} ./build/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${CIRCLE_TAG} ./build/
       - store_artifacts:
           path: build
           destination: binaries
