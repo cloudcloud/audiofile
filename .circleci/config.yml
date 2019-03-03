@@ -11,28 +11,6 @@ aliases:
   - &working-dir
     /var/audiofile
 
-  # Provide a way to save the current directory to cache.
-  - &save-cache
-    paths:
-      - ./
-      - /go/bin/
-    key: v2-base-deps-{{ $CIRCLE_SHA1 }}
-
-  # Provide a way to retrieve the current cache into the directory.
-  - &restore-cache
-    key: v2-base-deps-{{ $CIRCLE_SHA1 }}
-
-  # Capture data state once FE has completed.
-  - &save-fe
-    paths:
-      - ./
-      - /go/bin/
-    key: v2-fe-deps-{{ $CIRCLE_SHA1 }}
-
-  # Restore state from captured FE steps.
-  - &restore-fe
-    key: v2-fe-deps-{{ $CIRCLE_SHA1 }}
-
 version: 2
 jobs:
   build:
@@ -72,7 +50,6 @@ jobs:
           name: Compile the Frontend
           command: |
             yarn && yarn build
-      - save-cache: *save-fe
       - store_artifacts:
           path: dist
           destination: frontend
@@ -92,10 +69,13 @@ jobs:
       - run:
           name: Test backend
           command: |
+            echo -n "Compiling assets... "
             ./go-bindata -o audiofile/assets.go -prefix dist/ dist/...
+            echo "Done!"
             ./cc-test-reporter before-build
             go test -coverprofile=c.out -covermode=atomic -race ./...
             RESULT=$?
+            echo "Test completed."
             sed -i s#github.com/cloudcloud/audiofile## c.out
             ./cc-test-reporter after-build -t gocov --exit-code $RESULT
       - store_artifacts:
