@@ -9,7 +9,16 @@ aliases:
 
   # Set a specific working directory.
   - &working-dir
-    /var/audiofile
+    /go/audiofile
+
+  # Workspace persistence carries thorugh.
+  - &workspace-persist
+    root: /go/
+    paths:
+      - audiofile
+      - bin
+      - pkg
+      - src
 
 version: 2
 jobs:
@@ -22,6 +31,7 @@ jobs:
       - checkout
       - restore-cache:
           key: v1-deps-{{ checksum "go.sum" }}
+      - checkout
       - run:
           name: Prep local
           command: |
@@ -35,13 +45,9 @@ jobs:
           command: |
             go-bindata -o data/migrate.go -prefix data/migrations/ data/migrations/
             sed -i "s/package main/package data/" data/migrate.go
-      - persist_to_workspace:
-          root: ./
-          paths:
-            - ./
+      - persist_to_workspace: *workspace-persist
       - save-cache:
           paths:
-            - ./
             - /go/
           key: v1-deps-{{ checksum "go.sum" }}
 
@@ -52,7 +58,7 @@ jobs:
       - image: vuejs/ci
     steps:
       - attach_workspace:
-          at: ./
+          at: /go/
       - run:
           name: Compile the Frontend
           command: |
@@ -60,10 +66,7 @@ jobs:
       - store_artifacts:
           path: dist
           destination: frontend
-      - persist_to_workspace:
-          root: ./
-          paths:
-            - ./
+      - persist_to_workspace: *workspace-persist
 
   be-tests:
     environment: *default-env
@@ -72,7 +75,7 @@ jobs:
       - image: golang:1.12-stretch
     steps:
       - attach_workspace:
-          at: ./
+          at: /go/
       - run:
           name: Test backend
           command: |
@@ -85,10 +88,7 @@ jobs:
       - store_artifacts:
           path: c.out
           destination: test-coverage
-      - persist_to_workspace:
-          root: ./
-          paths:
-            - ./
+      - persist_to_workspace: *workspace-persist
 
   images:
     environment: *default-env
@@ -97,7 +97,7 @@ jobs:
       - image: golang:1.12-stretch
     steps:
       - attach_workspace:
-          at: ./
+          at: /go/
       - run:
           name: Build executables
           command: |
