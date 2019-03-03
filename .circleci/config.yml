@@ -69,13 +69,10 @@ jobs:
       - run:
           name: Test backend
           command: |
-            echo -n "Compiling assets... "
-            ./go-bindata -o audiofile/assets.go -prefix dist/ dist/...
-            echo "Done!"
             ./cc-test-reporter before-build
+            ./go-bindata -o ./audiofile/assets.go -prefix dist/ dist/...
             go test -coverprofile=c.out -covermode=atomic -race ./...
             RESULT=$?
-            echo "Test completed."
             sed -i s#github.com/cloudcloud/audiofile## c.out
             ./cc-test-reporter after-build -t gocov --exit-code $RESULT
       - store_artifacts:
