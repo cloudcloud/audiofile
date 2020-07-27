@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "axios": "^0.19.2",
+    "sass": "^1.26.10",
     "sass-loader": "^9.0.2",
     "vue": "^2.5.17",
     "vue-router": "^3.3.4",
