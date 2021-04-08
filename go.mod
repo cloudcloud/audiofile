@@ -4,7 +4,7 @@ require (
 	github.com/cloudcloud/go-id3 v0.0.0-20181021013013-a183a7f1fcbb
 	github.com/elazarl/go-bindata-assetfs v1.0.1
 	github.com/gin-contrib/cors v0.0.0-20181206035131-7c641a7a7dc5
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.7.0
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/golang-plus/errors v1.0.0 // indirect
 	github.com/golang-plus/uuid v1.0.0
